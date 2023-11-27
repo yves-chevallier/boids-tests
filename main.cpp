@@ -13,9 +13,11 @@
 
 using namespace std;
 
+#ifndef M_PI
 constexpr double M_PI = 3.141592653589793;
 constexpr double M_PI_2 = M_PI / 2;
 constexpr double M_PI_4 = M_PI / 4;
+#endif
 
 double FastArcTan(double x)
 {
@@ -83,11 +85,11 @@ struct Particle
 array<GLfloat[3], MAX_PARTICLES> vertices;
 array<Particle, MAX_PARTICLES> particles;
 
-#define WIDTH 1920
-#define HEIGHT 1200
+#define WIDTH 1000
+#define HEIGHT 1000
 int main()
 {
-    size_t nParticles = 100;
+    size_t nParticles = 300;
     float radius = 0.1f;
     sf::RenderWindow window(sf::VideoMode(WIDTH, HEIGHT), "Test");
 
