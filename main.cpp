@@ -9,7 +9,10 @@
 #include <cmath>
 #include <array>
 
+#define MAX_BOIDS 1000000
 #define FRAMERATE 120
+#define WIDTH 1000
+#define HEIGHT 1000
 
 using namespace std;
 
@@ -23,6 +26,7 @@ double FastArcTan(double x)
 {
     return M_PI_4 * x - x * (fabs(x) - 1) * (0.2447 + 0.0663 * fabs(x));
 }
+
 double FastArcTan2(double y, double x)
 {
     if (x >= 0)     // -pi/2 .. pi/2
@@ -46,7 +50,7 @@ std::string to_string_with_precision(const T a_value, const int n = 6)
     return out.str();
 }
 
-struct Particle
+struct Boid
 {
     sf::Vector2f position;
     sf::Vector2f velocity;
@@ -81,20 +85,17 @@ struct Particle
     }
 };
 
-#define MAX_PARTICLES 1000000
-array<GLfloat[3], MAX_PARTICLES> vertices;
-array<Particle, MAX_PARTICLES> particles;
+array<GLfloat[3], MAX_BOIDS> vertices;
+array<Boid, MAX_BOIDS> boids;
 
-#define WIDTH 1000
-#define HEIGHT 1000
 int main()
 {
-    size_t nParticles = 300;
+    size_t nBoids = 300;
     float radius = 0.1f;
-    sf::RenderWindow window(sf::VideoMode(WIDTH, HEIGHT), "Test");
+    sf::RenderWindow window(sf::VideoMode(WIDTH, HEIGHT), "Boids Simulation");
 
     sf::Transform matrix = sf::Transform::Identity;
-    matrix.scale(2.0 / WIDTH, 2.0 / HEIGHT);
+    matrix.scale(2.f / WIDTH, 2.f / HEIGHT);
     sf::Glsl::Mat4 projectionViewMatrix = matrix;
 
     sf::Texture texture;
@@ -113,6 +114,7 @@ int main()
     circleShader.loadFromFile("assets/circles.vert", "assets/circles.geom", "assets/circles.frag");
     fastShader.loadFromFile("assets/fast.vert", "assets/fast.frag");
     textureShader.loadFromFile("assets/fast.vert", "assets/texture.frag");
+
     sf::Shader *shaders[] = {&shader, &circleShader, &fastShader, &textureShader};
     for (auto *s : shaders)
     {
@@ -146,15 +148,15 @@ int main()
     fps.setCharacterSize(16);
     fps.setFillColor(sf::Color::White);
 
-    for (int i = 0; i < nParticles; i++)
+    for (int i = 0; i < nBoids; i++)
     {
-        particles[i].position = sf::Vector2f(rand() % WIDTH - WIDTH / 2, rand() % HEIGHT - HEIGHT / 2);
-        particles[i].velocity = sf::Vector2f(rand() % 500 - 250, rand() % 500 - 250);
+        boids[i].position = sf::Vector2f(rand() % WIDTH - WIDTH / 2, rand() % HEIGHT - HEIGHT / 2);
+        boids[i].velocity = sf::Vector2f(rand() % 500 - 250, rand() % 500 - 250);
     }
 
-    for (int i = 0; i < nParticles; i++)
+    for (int i = 0; i < nBoids; i++)
     {
-        auto &p = particles[i];
+        auto &p = boids[i];
         vertices[i][0] = p.position.x;
         vertices[i][1] = p.position.y;
         vertices[i][2] = atan2(p.velocity.y, p.velocity.x);
@@ -183,26 +185,26 @@ int main()
             case (sf::Event::MouseWheelScrolled):
                 if (ctrlDown)
                 {
-                    float increment = nParticles / 10;
+                    float increment = nBoids / 10;
                     if (currEvent.mouseWheelScroll.delta > 0)
                     {
-                        nParticles += increment;
-                        if (nParticles > MAX_PARTICLES)
+                        nBoids += increment;
+                        if (nBoids > MAX_BOIDS)
                         {
-                            nParticles = MAX_PARTICLES;
+                            nBoids = MAX_BOIDS;
                         }
-                        for (int i = nParticles - increment; i < nParticles; i++)
+                        for (int i = nBoids - increment; i < nBoids; i++)
                         {
-                            particles[i].position = sf::Vector2f(rand() % WIDTH - WIDTH / 2, rand() % HEIGHT - HEIGHT / 2);
-                            particles[i].velocity = sf::Vector2f(rand() % 500 - 250, rand() % 500 - 250);
+                            boids[i].position = sf::Vector2f(rand() % WIDTH - WIDTH / 2, rand() % HEIGHT - HEIGHT / 2);
+                            boids[i].velocity = sf::Vector2f(rand() % 500 - 250, rand() % 500 - 250);
                         }
                     }
                     else
                     {
-                        nParticles -= increment;
-                        if (nParticles < 10)
+                        nBoids -= increment;
+                        if (nBoids < 10)
                         {
-                            nParticles = 10;
+                            nBoids = 10;
                         }
                     }
                 }
@@ -225,69 +227,58 @@ int main()
                 break;
 
             case (sf::Event::KeyReleased):
-            {
                 if (currEvent.key.code == sf::Keyboard::LControl)
                 {
                     ctrlDown = false;
                 }
                 break;
-            }
             case (sf::Event::KeyPressed):
-            {
-                if (currEvent.key.code == sf::Keyboard::F12)
+
+                switch (currEvent.key.code)
                 {
-                    // sf::VideoMode::getFullscreenModes()[0];
+                case sf::Keyboard::F12:
+
                     window.create(sf::VideoMode(WIDTH, HEIGHT), "Boids", isFullscreen ? sf::Style::Default : sf::Style::Fullscreen);
                     isFullscreen = !isFullscreen;
-                }
-                if (currEvent.key.code == sf::Keyboard::LControl)
-                {
+                    break;
+
+                case sf::Keyboard::LControl:
                     ctrlDown = true;
                     break;
-                }
-                float increment = nParticles / 10;
-                if (currEvent.key.code == sf::Keyboard::P)
+
+                case sf::Keyboard::P:
                 {
-                    nParticles += increment;
-                    if (nParticles > MAX_PARTICLES)
+                    size_t increment = nBoids / 10;
+
+                    nBoids += increment;
+                    if (nBoids > MAX_BOIDS)
                     {
-                        nParticles = MAX_PARTICLES;
+                        nBoids = MAX_BOIDS;
                     }
-                    for (int i = nParticles - increment; i < nParticles; i++)
+                    for (int i = nBoids - increment; i < nBoids; i++)
                     {
-                        particles[i].position = sf::Vector2f(rand() % WIDTH - WIDTH / 2, rand() % HEIGHT - HEIGHT / 2);
-                        particles[i].velocity = sf::Vector2f(rand() % 500 - 250, rand() % 500 - 250);
+                        boids[i].position = sf::Vector2f(rand() % WIDTH - WIDTH / 2, rand() % HEIGHT - HEIGHT / 2);
+                        boids[i].velocity = sf::Vector2f(rand() % 500 - 250, rand() % 500 - 250);
                     }
+                    break;
                 }
-                else if (currEvent.key.code == sf::Keyboard::M)
-                {
-                    nParticles -= increment;
-                    if (nParticles < 10)
-                    {
-                        nParticles = 10;
-                    }
-                }
-                else if (currEvent.key.code == sf::Keyboard::Space)
-                {
+                case sf::Keyboard::M:
+
+                    nBoids -= nBoids / 10;
+                    if (nBoids < 10)
+                        nBoids = 10;
+
+                    break;
+                case sf::Keyboard::Space:
                     showCircles = !showCircles;
-                }
-                else if (currEvent.key.code == sf::Keyboard::F)
-                {
-                    if (boidShader == &shader)
-                    {
-                        boidShader = &fastShader;
-                    }
-                    else
-                    {
-                        boidShader = &shader;
-                    }
-                }
-                else if (currEvent.key.code == sf::Keyboard::Escape)
-                {
+                    break;
+                case sf::Keyboard::F:
+                    boidShader = boidShader == &shader ? &fastShader : &shader;
+                    break;
+                case sf::Keyboard::Escape:
                     window.close();
+                    break;
                 }
-                break;
-            }
             }
         }
         circleShader.setUniform("radius", radius);
@@ -303,21 +294,21 @@ int main()
 
             for (auto *s : shaders)
             {
-                if (nParticles < 1000)
+                if (nBoids < 1000)
                     s->setUniform("boidSize", 0.02f);
-                else if (nParticles < 10000)
+                else if (nBoids < 10000)
                     s->setUniform("boidSize", 0.01f);
-                else if (nParticles < 100000)
+                else if (nBoids < 100000)
                     s->setUniform("boidSize", 0.005f);
-                else if (nParticles >= 100000)
+                else if (nBoids >= 100000)
                     s->setUniform("boidSize", 0.003f);
                 else
                     s->setUniform("boidSize", 0.03f);
             }
 
-            for (int i = 0; i < nParticles; i++)
+            for (int i = 0; i < nBoids; i++)
             {
-                auto &p = particles[i];
+                auto &p = boids[i];
                 p.update(dt);
                 p.bounce(sf::Vector2f(WIDTH / 2.0, HEIGHT / 2.0));
                 vertices[i][0] = p.position.x;
@@ -337,7 +328,7 @@ int main()
                 seconds.restart();
             }
         }
-        fps.setString("boids: " + to_string(nParticles) + " fps: " + to_string_with_precision(avg, 0));
+        fps.setString("boids: " + to_string(nBoids) + " fps: " + to_string_with_precision(avg, 0));
 
         window.clear(sf::Color(40, 44, 52));
 
@@ -346,11 +337,11 @@ int main()
         if (timeFps > 30 && showCircles)
         {
             sf::Shader::bind(&circleShader);
-            glDrawArrays(GL_POINTS, 0, nParticles / 3);
+            glDrawArrays(GL_POINTS, 0, nBoids / 3);
         }
 
         sf::Shader::bind(boidShader);
-        glDrawArrays(GL_POINTS, 0, nParticles / 3);
+        glDrawArrays(GL_POINTS, 0, nBoids / 3);
 
         sf::Shader::bind(nullptr);
         window.draw(fps);

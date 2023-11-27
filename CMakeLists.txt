@@ -5,7 +5,6 @@ find_package(SFML COMPONENTS system window graphics CONFIG REQUIRED)
 find_package(TGUI CONFIG REQUIRED)
 find_package(GLEW REQUIRED)
 find_package(OpenGL REQUIRED)
-find_package(Wget REQUIRED)
 
 include_directories(${OPENGL_INCLUDE_DIRS})
 include_directories(${GLEW_INCLUDE_DIRS})

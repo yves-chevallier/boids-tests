@@ -1,5 +1,6 @@
 {
   "cmake.configureSettings": {
-    "CMAKE_TOOLCHAIN_FILE": "C:/src/vcpkg/scripts/buildsystems/vcpkg.cmake"
-  }
+    "CMAKE_TOOLCHAIN_FILE": "C:/Users/canard/Documents/vcpkg/scripts/buildsystems/vcpkg.cmake"
+  },
+  "cmake.generator": "Visual Studio 17 2022"
 }
