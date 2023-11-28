@@ -17,17 +17,17 @@
 using namespace std;
 
 #ifndef M_PI
-constexpr double M_PI = 3.141592653589793;
-constexpr double M_PI_2 = M_PI / 2;
-constexpr double M_PI_4 = M_PI / 4;
+constexpr float M_PI = 3.141592653589793;
+constexpr float M_PI_2 = M_PI / 2;
+constexpr float M_PI_4 = M_PI / 4;
 #endif
 
-double FastArcTan(double x)
+float FastArcTan(float x)
 {
     return M_PI_4 * x - x * (fabs(x) - 1) * (0.2447 + 0.0663 * fabs(x));
 }
 
-double FastArcTan2(double y, double x)
+float FastArcTan2(float y, float x)
 {
     if (x >= 0)     // -pi/2 .. pi/2
         if (y >= 0) // 0 .. pi/4 or pi/4 .. pi/2
@@ -82,6 +82,13 @@ struct Boid
             position.y = size.y;
             velocity.y *= -1;
         }
+    }
+
+    auto getX() const {
+        return position.x;
+    }
+    auto getY() const {
+        return position.y;
     }
 };
 
@@ -139,9 +146,7 @@ int main()
     // Fps text
     sf::Font font;
     if (!font.loadFromFile("assets/collegiate.ttf"))
-    {
         std::cout << "Error loading font" << std::endl;
-    }
     sf::Text fps;
     fps.setFont(font);
     fps.setPosition(10, 10);
@@ -165,12 +170,14 @@ int main()
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
     float fpsAvg = 0;
     float fpsCount = 0;
     float avg = 0;
     bool showCircles = false;
     bool ctrlDown = false;
     bool isFullscreen = false;
+
     sf::Shader *boidShader = &shader;
     while (window.isOpen())
     {
@@ -185,15 +192,13 @@ int main()
             case (sf::Event::MouseWheelScrolled):
                 if (ctrlDown)
                 {
-                    float increment = nBoids / 10;
+                    const size_t increment = nBoids / 10;
                     if (currEvent.mouseWheelScroll.delta > 0)
                     {
                         nBoids += increment;
-                        if (nBoids > MAX_BOIDS)
-                        {
-                            nBoids = MAX_BOIDS;
-                        }
-                        for (int i = nBoids - increment; i < nBoids; i++)
+                        nBoids = nBoids > MAX_BOIDS ? MAX_BOIDS : nBoids;
+
+                        for (size_t i = nBoids - increment; i < nBoids; i++)
                         {
                             boids[i].position = sf::Vector2f(rand() % WIDTH - WIDTH / 2, rand() % HEIGHT - HEIGHT / 2);
                             boids[i].velocity = sf::Vector2f(rand() % 500 - 250, rand() % 500 - 250);
@@ -202,10 +207,7 @@ int main()
                     else
                     {
                         nBoids -= increment;
-                        if (nBoids < 10)
-                        {
-                            nBoids = 10;
-                        }
+                        nBoids = nBoids < 10 ? 10 : nBoids;
                     }
                 }
 
@@ -228,9 +230,7 @@ int main()
 
             case (sf::Event::KeyReleased):
                 if (currEvent.key.code == sf::Keyboard::LControl)
-                {
                     ctrlDown = false;
-                }
                 break;
             case (sf::Event::KeyPressed):
 
@@ -252,10 +252,9 @@ int main()
 
                     nBoids += increment;
                     if (nBoids > MAX_BOIDS)
-                    {
                         nBoids = MAX_BOIDS;
-                    }
-                    for (int i = nBoids - increment; i < nBoids; i++)
+
+                    for (size_t i = nBoids - increment; i < nBoids; i++)
                     {
                         boids[i].position = sf::Vector2f(rand() % WIDTH - WIDTH / 2, rand() % HEIGHT - HEIGHT / 2);
                         boids[i].velocity = sf::Vector2f(rand() % 500 - 250, rand() % 500 - 250);
@@ -263,7 +262,6 @@ int main()
                     break;
                 }
                 case sf::Keyboard::M:
-
                     nBoids -= nBoids / 10;
                     if (nBoids < 10)
                         nBoids = 10;
@@ -281,10 +279,11 @@ int main()
                 }
             }
         }
+
         circleShader.setUniform("radius", radius);
         timeSinceLastDraw = clock.restart();
         timeSinceLastUpdate += timeSinceLastDraw;
-        double timeFps = 1.f / timeSinceLastDraw.asSeconds();
+        float timeFps = 1.f / timeSinceLastDraw.asSeconds();
 
         while (timeSinceLastUpdate > timePerFrame)
         {
@@ -313,11 +312,9 @@ int main()
                 p.bounce(sf::Vector2f(WIDTH / 2.0, HEIGHT / 2.0));
                 vertices[i][0] = p.position.x;
                 vertices[i][1] = p.position.y;
-                if (boidShader == &fastShader)
-                    vertices[i][2] = 0;
-                else
-                    vertices[i][2] = FastArcTan2(p.velocity.y, p.velocity.x);
+                vertices[i][2] = boidShader == &fastShader ? 0 : FastArcTan2(p.velocity.y, p.velocity.x);
             }
+
             fpsCount++;
             fpsAvg += timeFps;
             if (seconds.getElapsedTime() >= sf::seconds(1))
@@ -328,6 +325,7 @@ int main()
                 seconds.restart();
             }
         }
+
         fps.setString("boids: " + to_string(nBoids) + " fps: " + to_string_with_precision(avg, 0));
 
         window.clear(sf::Color(40, 44, 52));

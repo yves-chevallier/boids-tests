@@ -28,6 +28,7 @@ This project can be built on Windows using Visual Studio 2022 and vcpkg for depe
 ### Steps
 
 1. **Clone the Repository**
+
    ```bash
    git clone https://github.com/yves-chevallier/boids-tests.git
    cd boids-tests
@@ -37,15 +38,18 @@ This project can be built on Windows using Visual Studio 2022 and vcpkg for depe
 
    - Install vcpkg following [these instructions](https://github.com/Microsoft/vcpkg#quick-start-windows).
    - Install required libraries:
-   ```
+
+   ```powershell
    .\vcpkg\vcpkg install sfml tgui glew
    ```
 
 3. **Configure Visual Studio with vcpkg**
    - Integrate vcpkg with Visual Studio:
-     ```
+
+     ```powershell
      .\vcpkg\vcpkg integrate install
      ```
+
    - Open the project in Visual Studio.
    - Set the vcpkg toolchain in CMake settings (Project > CMake Settings for [your project]) to `[path to vcpkg]/scripts/buildsystems/vcpkg.cmake`.
 
@@ -57,3 +61,11 @@ This project can be built on Windows using Visual Studio 2022 and vcpkg for depe
 
 - If you encounter any issues, first ensure all dependencies are correctly installed and accessible to Visual Studio.
 - Clearing the CMake cache (CMake Cache > delete) can resolve many configuration issues.
+
+## Spatial Partitioning
+
+The different solutions are:
+
+- Quadtree/Octree
+- Grid-Based Spatial Hashing
+- Bin Lattice Spatial Subdivision
